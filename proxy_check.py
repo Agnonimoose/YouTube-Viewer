@@ -24,6 +24,7 @@ SOFTWARE.
 import os
 import shutil
 import sys
+import json
 from concurrent.futures import ThreadPoolExecutor, wait
 from glob import glob
 from time import sleep
@@ -96,24 +97,99 @@ def load_proxy():
     filename = input(bcolors.OKBLUE +
                      'Enter your proxy file name: ' + bcolors.ENDC)
 
-    if not os.path.isfile(filename) and filename[-4:] != '.txt':
-        filename = f'{filename}.txt'
+    if filename[-4:] == "json":
+        proxies = json.loads(open(filename, "r").read())
+    else:
+        if not os.path.isfile(filename) and filename[-4:] != '.txt':
+            filename = f'{filename}.txt'
 
-    try:
-        with open(filename, encoding="utf-8") as fh:
-            loaded = [x.strip() for x in fh if x.strip() != '']
-    except Exception as e:
-        print(bcolors.FAIL + str(e) + bcolors.ENDC)
-        input('')
-        sys.exit()
+        try:
+            with open(filename, encoding="utf-8") as fh:
+                loaded = [x.strip() for x in fh if x.strip() != '']
+                for lines in loaded:
+                    if lines.count(':') == 3:
+                        split = lines.split(':')
+                        lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
+                    proxies.append(lines)
 
-    for lines in loaded:
-        if lines.count(':') == 3:
-            split = lines.split(':')
-            lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
-        proxies.append(lines)
+
+        except Exception as e:
+            print(bcolors.FAIL + str(e) + bcolors.ENDC)
+            input('')
+            sys.exit()
 
     return proxies
+
+def main_checker_json(proxy_dict, position):
+    if cancel_all:
+        raise KeyboardInterrupt
+
+    checked[position] = None
+
+    try:
+        header = Headers(
+            headers=False
+        ).generate()
+        agent = header['User-Agent']
+
+        headers = {
+            'User-Agent': f'{agent}',
+        }
+
+        response = requests.get(
+            'https://www.youtube.com/', headers=headers, proxies=proxy_dict, timeout=30, verify=False)
+        status = response.status_code
+
+        if status != 200:
+            raise Exception(status)
+
+        print(bcolors.OKBLUE + f"Worker {position+1} | " + bcolors.OKGREEN +
+              f'| GOOD | Type : | Response : {status}' + bcolors.ENDC)
+
+        print(f'|', file=open('GoodProxy.txt', 'a'))
+
+    except Exception as e:
+        try:
+            print(e)
+            e = int(e.args[0])
+        except Exception as e:
+            # print(e)
+            e = ''
+        print(bcolors.OKBLUE + f"Worker {position+1} | " + bcolors.FAIL +
+              f' |  | BAD | {e}' + bcolors.ENDC)
+
+def proxy_check_json(proxy_list, position):
+    sleep(1)
+    main_checker_json(proxy_list, position)
+
+
+def main_json(proxy_list):
+    global cancel_all
+
+    cancel_all = False
+
+    total_proxies = 5
+
+    pool_number = [i for i in range(total_proxies)]
+
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        futures = [executor.submit(proxy_check_json, proxy_list, position)
+                   for position in pool_number]
+        done, not_done = wait(futures, timeout=0)
+        try:
+            while not_done:
+                freshly_done, not_done = wait(not_done, timeout=5)
+                done |= freshly_done
+        except KeyboardInterrupt:
+            print(bcolors.WARNING +
+                  'Hold on!!! Allow me a moment to finish the running threads' + bcolors.ENDC)
+            cancel_all = True
+            for future in not_done:
+                _ = future.cancel()
+            _ = wait(not_done, timeout=None)
+            raise KeyboardInterrupt
+        except IndexError:
+            print(bcolors.WARNING + 'Number of proxies are less than threads. Provide more proxies or less threads. ' + bcolors.ENDC)
 
 
 def main_checker(proxy_type, proxy, position):
@@ -127,6 +203,7 @@ def main_checker(proxy_type, proxy, position):
             "http": f"{proxy_type}://{proxy}",
             "https": f"{proxy_type}://{proxy}",
         }
+        print("proxy_dict = ", proxy_dict)
 
         header = Headers(
             headers=False
@@ -213,13 +290,24 @@ if __name__ == '__main__':
 
     proxy_list = load_proxy()
     # removing empty & duplicate proxies
-    proxy_list = list(set(filter(None, proxy_list)))
+    if isinstance(proxy_list, list):
+        proxy_list = list(set(filter(None, proxy_list)))
 
-    total_proxies = len(proxy_list)
-    print(bcolors.OKCYAN +
-          f'Total unique proxies : {total_proxies}' + bcolors.ENDC)
+        total_proxies = len(proxy_list)
+        print(bcolors.OKCYAN +
+              f'Total unique proxies : {total_proxies}' + bcolors.ENDC)
 
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit()
+        try:
+            main()
+        except KeyboardInterrupt:
+            sys.exit()
+    else:
+        total_proxies = len(proxy_list)
+        print(bcolors.OKCYAN +
+              f'Total unique JSON proxies : {total_proxies}' + bcolors.ENDC)
+
+
+        try:
+            main_json(proxy_list)
+        except KeyboardInterrupt:
+            sys.exit()

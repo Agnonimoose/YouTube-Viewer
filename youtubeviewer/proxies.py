@@ -24,7 +24,7 @@ SOFTWARE.
 import sys
 from random import shuffle
 
-import requests
+import requests, json
 
 from .colors import *
 
@@ -65,25 +65,28 @@ def gather_proxy():
 def load_proxy(filename):
     proxies = []
 
-    if not os.path.isfile(filename) and filename[-4:] != '.txt':
-        filename = f'{filename}.txt'
+    if filename[-4:] == "json" and os.path.isfile(filename):
+        proxies = json.loads(open(filename, "r").read())
+    else:
+        if not os.path.isfile(filename) and filename[-4:] != '.txt':
+            filename = f'{filename}.txt'
 
-    try:
-        with open(filename, encoding="utf-8") as fh:
-            loaded = [x.strip() for x in fh if x.strip() != '']
-    except Exception as e:
-        print(bcolors.FAIL + str(e) + bcolors.ENDC)
-        input('')
-        sys.exit()
+        try:
+            with open(filename, encoding="utf-8") as fh:
+                loaded = [x.strip() for x in fh if x.strip() != '']
+        except Exception as e:
+            print(bcolors.FAIL + str(e) + bcolors.ENDC)
+            input('')
+            sys.exit()
 
-    for lines in loaded:
-        if lines.count(':') == 3:
-            split = lines.split(':')
-            lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
-        proxies.append(lines)
+        for lines in loaded:
+            if lines.count(':') == 3:
+                split = lines.split(':')
+                lines = f'{split[2]}:{split[-1]}@{split[0]}:{split[1]}'
+            proxies.append(lines)
 
-    proxies = list(filter(None, proxies))
-    shuffle(proxies)
+        proxies = list(filter(None, proxies))
+        shuffle(proxies)
 
     return proxies
 
@@ -117,6 +120,32 @@ def scrape_api(link):
 
 
 def check_proxy(category, agent, proxy, proxy_type):
+    if category == 'f':
+        headers = {
+            'User-Agent': f'{agent}',
+        }
+
+        proxy_dict = {
+            "http": f"{proxy_type}://{proxy}",
+            "https": f"{proxy_type}://{proxy}",
+        }
+        response = requests.get(
+            'https://www.youtube.com/', headers=headers, proxies=proxy_dict, timeout=30)
+        status = response.status_code
+
+    elif category == 's':
+        headers = {
+            'User-Agent': f'{agent}',
+        }
+        response = requests.get(
+            'https://www.youtube.com/', headers=headers, proxies=proxy, timeout=3, verify=False)
+        status = response.status_code
+    else:
+        status = 200
+
+    return status
+
+def check_proxy_scrapbee(category, agent, proxy, proxy_type):
     if category == 'f':
         headers = {
             'User-Agent': f'{agent}',

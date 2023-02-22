@@ -111,6 +111,29 @@ def config_min_max(config):
     config["maximum"] = maximum
     return config
 
+def config_scrapbee(category):
+    auth_required = False
+    proxy_api = False
+
+    handle_proxy = str(input(
+        bcolors.OKBLUE + '\nLet YouTube Viewer handle proxies ? (recommended=No) [No/yes] : ' + bcolors.ENDC)).lower()
+
+    if handle_proxy == 'y' or handle_proxy == 'yes':
+        proxy_type = False
+        filename = False
+
+    else:
+        filename = ""
+        while not filename:
+            filename = str(input(
+                bcolors.OKCYAN + '\nEnter your proxy File Name or Proxy API link : ' + bcolors.ENDC))
+
+        if 'http://' in filename or 'https://' in filename:
+            proxy_api = True
+
+        proxy_type = False
+
+    return proxy_type, filename, auth_required, proxy_api
 
 def config_free_proxy(category):
     auth_required = False
@@ -205,10 +228,10 @@ def config_proxy(config):
           '--> Premium proxy : authentication required | Format : [USER:PASS@IP:PORT] or [IP:PORT:USER:PASS] | Type : HTTP only' + bcolors.ENDC)
     print(bcolors.WARNING + '--> Rotating proxy : follows Free proxy for no authentication and vice versa' + bcolors.ENDC)
     category = input(bcolors.OKCYAN + "\nWhat's your proxy category? " +
-                     "[F = Free, P = Premium, R = Rotating Proxy] : " + bcolors.ENDC).lower()
-    while category not in ['f', 'p', 'r']:
+                     "[F = Free, P = Premium, R = Rotating Proxy, S = Scrapbee] : " + bcolors.ENDC).lower()
+    while category not in ['f', 'p', 'r', 's']:
         category = input(
-            '\nPlease input F for Free, P for Premium and R for Rotating proxy : ').lower()
+            '\nPlease input F for Free, P for Premium, R for Rotating proxy and S for Rotating proxy: ').lower()
 
     if category == 'f':
         proxy_type, filename, auth_required, proxy_api = config_free_proxy(
@@ -218,8 +241,14 @@ def config_proxy(config):
         proxy_type, filename, auth_required, proxy_api = config_premium_proxy(
             category)
 
+    elif category == 's':
+        proxy_type, filename, auth_required, proxy_api = config_scrapbee(
+            category)
+
     refresh = 0.0
-    if category != 'r' and filename:
+    if category == 's':
+        pass
+    elif category != 'r' and filename:
         print(bcolors.WARNING + '\n--> Refresh interval means after every X minutes, program will reload proxies from your File or API' + bcolors.ENDC)
         print(bcolors.WARNING + '--> You should use this if and only if there will be new proxies in your File or API after every X minutes.' + bcolors.ENDC)
         print(bcolors.WARNING +
@@ -240,6 +269,14 @@ def config_proxy(config):
     }
     return config
 
+def config_driver(config):
+    driver = input(bcolors.OKCYAN + "\nUse Playwright as Driver[No/Yes] (default=No)? " + bcolors.ENDC).lower()
+    if driver == 'y' or driver == 'yes':
+        driver = 'y'
+    else:
+        driver = 'n'
+    config["driver_type"] = driver
+    return config
 
 def config_gui(config):
     gui = str(input(
@@ -323,6 +360,8 @@ def create_config(config_path):
     config = config_min_max(config=config)
 
     config = config_proxy(config=config)
+
+    config = config_driver(config=config)
 
     config = config_gui(config=config)
 
