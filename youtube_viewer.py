@@ -156,8 +156,8 @@ def clean_exe_temp(folder):
             print(f'Install Python version between 3.7.x to 3.11.x to run this script')
             input("")
             sys.exit()
-
-    for f in glob(os.path.join('temp', folder, '*')):
+    import glob
+    for f in glob.glob(os.path.join('temp', folder, '*')):
         if temp_name not in f:
             shutil.rmtree(f, ignore_errors=True)
 
@@ -1206,7 +1206,7 @@ def main_viewer_scrapbee(proxy, position):
                         except Exception as e:
                             print(e)
 
-                    status = quit_driver(driver=page, data_dir=None) +
+                    status = quit_driver(driver=page, data_dir=None)
                 except Exception as e:
                     status = quit_driver(driver=driver, data_dir=data_dir)
                     print("e = ", e)
@@ -1221,7 +1221,7 @@ def main_viewer_scrapbee(proxy, position):
                         {
                             "#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"})
 
-            except RequestException:
+        except RequestException:
             print(timestamp() + bcolors.OKBLUE + f"Worker {position} | " +
                   bcolors.FAIL + f"{proxy} | {proxy_type.upper()} | Bad proxy " + bcolors.ENDC)
 
@@ -1452,13 +1452,9 @@ if __name__ == '__main__':
     cpu_usage = str(psutil.cpu_percent(1))
     update_chrome_version()
     check_update()
-    osname, exe_name = download_driver(patched_drivers=patched_drivers)
     create_database(database=DATABASE, database_backup=DATABASE_BACKUP)
 
-    if osname == 'win':
-        import wmi
 
-        constructor = wmi.WMI()
 
     urls = load_url()
     queries = load_search()
@@ -1467,13 +1463,13 @@ if __name__ == '__main__':
         with open(config_path, 'r', encoding='utf-8-sig') as openfile:
             config = json.load(openfile)
 
-        if len(config) == 11:
+        if len(config) == 12:
             print(json.dumps(config, indent=4))
             print(
-                bcolors.OKCYAN + 'Config file exists! Program will start automatically after 20 seconds...' + bcolors.ENDC)
+                bcolors.OKCYAN + 'Config file exists! Program will start automatically after 5 seconds...' + bcolors.ENDC)
             print(
-                bcolors.FAIL + 'If you want to create a new config file PRESS CTRL+C within 20 seconds!' + bcolors.ENDC)
-            start = time() + 20
+                bcolors.FAIL + 'If you want to create a new config file PRESS CTRL+C within 5 seconds!' + bcolors.ENDC)
+            start = time() + 5
             try:
                 i = 0
                 while i < 96:
@@ -1525,8 +1521,16 @@ if __name__ == '__main__':
             if driver_type == "n":
                 from youtubeviewer.basics import *
                 from youtubeviewer.download_driver import *
+
+                osname, exe_name = download_driver(patched_drivers=patched_drivers)
+                if osname == 'win':
+                    import wmi
+
+                    constructor = wmi.WMI()
             else:
                 from youtubeviewer.basics_playwright import *
+                import platform
+                osname = platform.system()
 
             if minimum >= maximum:
                 minimum = maximum - 5
