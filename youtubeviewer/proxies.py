@@ -129,11 +129,10 @@ def check_proxy(category, agent, proxy, proxy_type):
             "http": f"{proxy_type}://{proxy}",
             "https": f"{proxy_type}://{proxy}",
         }
-        print(proxy_dict)
+        # print(proxy_dict)
         response = requests.get(
             'https://www.youtube.com/', headers=headers, proxies=proxy_dict, timeout=30)
         status = response.status_code
-
     elif category == 's':
         headers = {
             'User-Agent': f'{agent}',

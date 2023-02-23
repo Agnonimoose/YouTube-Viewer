@@ -23,8 +23,8 @@ SOFTWARE.
 """
 # from .bypass import *
 from . import bypass_playwright
-from time import sleep
 from random import choice, choices, randint, shuffle, uniform
+import asyncio
 
 
 COMMANDS = ['share', 'k', 'j', 'l', 't', 'c']
@@ -37,107 +37,107 @@ QUALITY = {
 }
 
 
-def skip_again(page):
+async def skip_again(page):
     try:
-        skip_ad = page.locator(".ytp-ad-skip-button").first
-        skip_ad.scroll_into_view_if_needed()
-        sleep(1)
-        skip_ad.click(timeout=100)
+        skip_ad = await page.locator(".ytp-ad-skip-button").first
+        await skip_ad.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await skip_ad.click(timeout=100)
     except Exception as e:
         print(e)
 
 
-def skip_initial_ad(page, video, duration_dict):
+async def skip_initial_ad(page, video, duration_dict):
     video_len = duration_dict.get(video, 0)
     if video_len > 30:
-        bypass_playwright.bypass_popup(page)
+        await bypass_playwright.bypass_popup(page)
         try:
             skipped = False
             waited = 0
             while skipped == False:
-                if page.locator(".ytp-ad-skip-button").count() == 0:
+                if await page.locator(".ytp-ad-skip-button").count() == 0:
                     if waited == 30:
                         skipped = True
                     else:
-                        sleep(1)
+                        await asyncio.sleep(1)
                         waited += 1
                 else:
-                    skip_ad = page.locator(".ytp-ad-skip-button").first
-                    skip_ad.scroll_into_view_if_needed()
-                    skip_ad.click(timeout=1000)
+                    skip_ad = await page.locator(".ytp-ad-skip-button").first
+                    await skip_ad.scroll_into_view_if_needed()
+                    await skip_ad.click(timeout=1000)
                     skipped = True
 
         except Exception as e:
             print(e)
-            skip_again(page)
+            await skip_again(page)
 
 
-def save_bandwidth(page):
+async def save_bandwidth(page):
     quality_index = choices([1, 2, 3], cum_weights=(0.7, 0.9, 1.00), k=1)[0]
     try:
         random_quality = QUALITY[quality_index][0]
-        settings = page.locator(".ytp-button.ytp-settings-button").first
-        settings.click(timeout=1000)
+        settings = await page.locator(".ytp-button.ytp-settings-button").first
+        await settings.click(timeout=1000)
 
-        Quality = page.locator("xpath=//div[contains(text(),'Quality')]").first
-        Quality.click(timeout=1000)
+        Quality = await page.locator("xpath=//div[contains(text(),'Quality')]").first
+        await Quality.click(timeout=1000)
 
-        sleep(1)
-        quality = page.locator( f"xpath=//span[contains(string(),'{random_quality}')]").first
-        quality.scroll_into_view_if_needed()
-        quality.click(timeout=1000)
+        await asyncio.sleep(1)
+        quality = await page.locator( f"xpath=//span[contains(string(),'{random_quality}')]").first
+        await quality.scroll_into_view_if_needed()
+        await quality.click(timeout=1000)
 
     except Exception as e:
         print(e)
         try:
             random_quality = QUALITY[quality_index][1]
-            page.execute_script(
+            await page.execute_script(
                 f"document.getElementById('movie_player').setPlaybackQualityRange('{random_quality}')")
         except Exception as e:
             print(e)
 
 
-def change_playback_speed(page, playback_speed):
+async def change_playback_speed(page, playback_speed):
     if playback_speed == 2:
-        page.locator('#movie_player').press('<'*randint(1, 3))
+        await page.locator('#movie_player').press('<'*randint(1, 3))
     elif playback_speed == 3:
-        page.locator('#movie_player').press('>'*randint(1, 3))
+        await page.locator('#movie_player').press('>'*randint(1, 3))
 
 
-def random_command(page):
+async def random_command(page):
     try:
-        bypass_playwright.bypass_other_popup(page)
+        await bypass_playwright.bypass_other_popup(page)
         option = choices([1, 2], cum_weights=(0.7, 1.00), k=1)[0]
         if option == 2:
             command = choice(COMMANDS)
             if command in ['m', 't', 'c']:
-                page.locator('#movie_player').press(command)
+                await page.locator('#movie_player').press(command)
             elif command == 'k':
                 if randint(1, 2) == 1:
-                    page.locator('#movie_player').press(command)
+                    await page.locator('#movie_player').press(command)
                 x = choice([1, 2])
                 if x == 1:
-                    page.locator('#movie_player').scrollIntoView()
+                    await page.locator('#movie_player').scrollIntoView()
                 else:
-                    page.locator('#movie_player').scroll_into_view_if_needed()
+                    await page.locator('#movie_player').scroll_into_view_if_needed()
 
-                sleep(uniform(4, 10))
-                page.locator('#movie_player').scroll_into_view_if_needed()
+                await asyncio.sleep(uniform(4, 10))
+                await page.locator('#movie_player').scroll_into_view_if_needed()
 
             elif command == 'share':
                 if choices([1, 2], cum_weights=(0.9, 1.00), k=1)[0] == 2:
-                    page.locator("xpath=//button[@id='button' and @aria-label='Share']").first.click(timeout=1000)
-                    sleep(uniform(2, 5))
+                    await page.locator("xpath=//button[@id='button' and @aria-label='Share']").first.click(timeout=1000)
+                    await asyncio.sleep(uniform(2, 5))
 
             else:
-                page.locator('#movie_player').press(command*randint(1, 5))
+                await page.locator('#movie_player').press(command*randint(1, 5))
     except Exception as e:
         print(e)
 
 
-def wait_for_new_page(page, previous_url=False, previous_title=False):
+async def wait_for_new_page(page, previous_url=False, previous_title=False):
     for _ in range(30):
-        sleep(1)
+        await asyncio.sleep(1)
         if previous_url:
             if page.url != previous_url:
                 break
@@ -146,7 +146,7 @@ def wait_for_new_page(page, previous_url=False, previous_title=False):
                 break
 
 
-def play_next_video(page, suggested):
+async def play_next_video(page, suggested):
     shuffle(suggested)
     video_id = choice(suggested)
 
@@ -157,7 +157,7 @@ def play_next_video(page, suggested):
             break
 
     try:
-        page.locator(".tp-yt-paper-button#expand").click(timeout=1000)
+        await page.locator(".tp-yt-paper-button#expand").click(timeout=1000)
         js = f'''
         var html = '<a class="yt-simple-endpoint style-scope yt-formatted-string" ' +
         'spellcheck="false" href="/watch?v={video_id}&t=0s" ' +
@@ -182,43 +182,43 @@ def play_next_video(page, suggested):
         element.insertAdjacentHTML( 'afterbegin', html );
         '''
 
-    page.evaluate(js)
+    await page.evaluate(js)
 
-    find_video = page.wait_for_selector( f'xpath=//a[@href="/watch?v={video_id}&t=0s"]', timeout=30000)
+    find_video = await page.wait_for_selector( f'xpath=//a[@href="/watch?v={video_id}&t=0s"]', timeout=30000)
 
     skipped = False
     waited = 0
     while skipped == False:
-        if page.locator(f'xpath=//a[@href="/watch?v={video_id}&t=0s"]').count() == 0:
+        if await page.locator(f'xpath=//a[@href="/watch?v={video_id}&t=0s"]').count() == 0:
             if waited == 30:
                 skipped = True
             else:
-                sleep(1)
+                await asyncio.sleep(1)
                 waited += 1
         else:
-            skip_ad = page.locator(".ytp-ad-skip-button").first
-            skip_ad.scroll_into_view_if_needed()
-            skip_ad.click(timeout=1000)
+            skip_ad = await page.locator(".ytp-ad-skip-button").first
+            await skip_ad.scroll_into_view_if_needed()
+            await skip_ad.click(timeout=1000)
             skipped = True
 
 
-    find_video.scroll_into_view_if_needed()
+    await find_video.scroll_into_view_if_needed()
 
     previous_title = page.title()
-    find_video.click(timeout=1000)
-    wait_for_new_page(page=page, previous_url=False,
+    await find_video.click(timeout=1000)
+    await wait_for_new_page(page=page, previous_url=False,
                       previous_title=previous_title)
 
     return page.title()[:-10]
 
 
-def play_from_channel(page, actual_channel):
-    channel = page.locator('.ytd-video-owner-renderer a').all()[randint(0, 1)]
-    channel.crollIntoViewIfNeeded()
-    
+async def play_from_channel(page, actual_channel):
+    channel = await page.locator('.ytd-video-owner-renderer a').all()[randint(0, 1)]
+    await channel.crollIntoViewIfNeeded()
+
     previous_title = page.title()
-    channel.click(timeout=1000)
-    wait_for_new_page(page=page, previous_url=False,
+    await channel.click(timeout=1000)
+    await wait_for_new_page(page=page, previous_url=False,
                       previous_title=previous_title)
 
     channel_name = page.title()[:-10]
@@ -229,33 +229,33 @@ def play_from_channel(page, actual_channel):
                 f"Accidentally opened another channel : {channel_name}. Closing it...")
 
         x = randint(30, 50)
-        sleep(x)
-        output = page.locator('xpath=//yt-formatted-string[@id="title"]/a').text_content()
+        await asyncio.sleep(x)
+        output = await page.locator('xpath=//yt-formatted-string[@id="title"]/a').text_content()
         log = f'Video [{output}] played for {x} seconds from channel home page : {channel_name}'
         option = 4
     else:
-        sleep(randint(2, 5))
+        await asyncio.sleep(randint(2, 5))
         previous_url = page.url
-        page.locator("xpath=//tp-yt-paper-tab[2]").click(timeout=1000)
-        wait_for_new_page(page=page, previous_url=previous_url,
+        await page.locator("xpath=//tp-yt-paper-tab[2]").click(timeout=1000)
+        await wait_for_new_page(page=page, previous_url=previous_url,
                           previous_title=False)
 
-        page.refresh()
+        page.reload()
         videos = page.wait_for_selector("xpath=//a[@id='video-title-link']", 10000)
-        
+
         video = choice(videos)
         video.scroll_into_view_if_needed()
-        sleep(randint(2, 5))
+        await asyncio.sleep(randint(2, 5))
         previous_title = page.title()
-        bypass_playwright.ensure_click(page, video)
-        wait_for_new_page(page=page, previous_url=False,
+        await bypass_playwright.ensure_click(page, video)
+        await wait_for_new_page(page=page, previous_url=False,
                           previous_title=previous_title)
 
         output = page.title()[:-10]
         log = f'Random video [{output}] played from channel : {channel_name}'
         option = 2
 
-        channel_name = page.locator('#upload-info a').text_content()
+        channel_name = await page.locator('#upload-info a').text_content()
         if channel_name != actual_channel:
             raise Exception(
                 f"Accidentally opened video {output} from another channel : {channel_name}. Closing it...")
@@ -263,7 +263,7 @@ def play_from_channel(page, actual_channel):
     return output, log, option
 
 
-def play_end_screen_video(page):
+async def play_end_screen_video(page):
     try:
         page.locator('css=[title^="Pause (k)"]')
         page.locator('#movie_player').press('k')
@@ -276,7 +276,7 @@ def play_end_screen_video(page):
     end_screen = page.wait_for_selector("xpath=//*[@class='ytp-ce-covering-overlay']", timeout = 5000)
 
     previous_title = page.title()
-    sleep(randint(2, 5))
+    await asyncio.sleep(randint(2, 5))
     if end_screen:
         bypass_playwright.ensure_click(page, choice(end_screen))
     else:

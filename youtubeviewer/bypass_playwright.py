@@ -22,101 +22,101 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from random import choice, choices, randint, shuffle, uniform
-from time import sleep
+import asyncio
 
 from playwright.sync_api import sync_playwright
 
-def ensure_click(page, element):
+async def ensure_click(page, element):
     try:
-        element.scroll_into_view_if_needed()
-        sleep(1)
-        element.click()
+        await element.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await element.click()
     except:
-        element.first.scroll_into_view_if_needed()
-        sleep(1)
-        element.first.click()
+        await element.first.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await element.first.click()
 
 
-def personalization(page):
+async def personalization(page):
     try:
-        search = page.locator(f'xpath=//button[@aria-label="Turn {choice(["on","off"])} Search customization"]').first
-        search.scroll_into_view_if_needed()
-        sleep(1)
-        search.click(timeout=100)
+        search = await page.locator(f'xpath=//button[@aria-label="Turn {choice(["on","off"])} Search customization"]').first
+        await search.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await search.click(timeout=100)
 
-        history = page.locator(f'xpath=//button[@aria-label="Turn {choice(["on","off"])} YouTube History"]').first
-        history.scroll_into_view_if_needed()
-        sleep(1)
-        history.click(timeout=100)
+        history = await page.locator(f'xpath=//button[@aria-label="Turn {choice(["on","off"])} YouTube History"]').first
+        await history.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await history.click(timeout=100)
 
-        ad = page.locator(f'xpath=//button[@aria-label="Turn {choice(["on","off"])} Ad personalization"]').first
-        ad.scroll_into_view_if_needed()
-        sleep(1)
-        ad.click(timeout=100)
+        ad = await page.locator(f'xpath=//button[@aria-label="Turn {choice(["on","off"])} Ad personalization"]').first
+        await ad.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await ad.click(timeout=100)
 
-        confirm = page.locator('xpath=//button[@jsname="j6LnYe"]').first
-        confirm.scroll_into_view_if_needed()
-        sleep(1)
-        confirm.click(timeout=100)
+        confirm = await page.locator('xpath=//button[@jsname="j6LnYe"]').first
+        await confirm.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await confirm.click(timeout=100)
     except Exception as e:
         print(e)
 
 
-def bypass_consent(page):
+async def bypass_consent(page):
     try:
-        consent = page.get_by_role("button", name="Accept all")
-        consent.scroll_into_view_if_needed()
-        sleep(1)
-        consent.click(timeout=100)
+        consent = await page.get_by_role("button", name="Accept all")
+        await consent.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await consent.click(timeout=100)
         if 'consent' in page.url:
-            personalization(page)
+            await personalization(page)
 
     except Exception as e:
         print(e)
-        consent = page.locator("xpath=//button[@jsname='j6LnYe']").first
-        consent.scroll_into_view_if_needed()
-        sleep(1)
-        consent.click(timeout=100)
+        consent = await page.locator("xpath=//button[@jsname='j6LnYe']").first
+        await consent.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await consent.click(timeout=100)
         if 'consent' in page.current_url:
-            personalization(page)
+            await personalization(page)
 
 
-def click_popup(page, element):
-    element.scroll_into_view_if_needed()
-    sleep(1)
-    element.click(timeout=100)
+async def click_popup(page, element):
+    await element.scroll_into_view_if_needed()
+    await asyncio.sleep(1)
+    await element.click(timeout=100)
 
 
-def bypass_popup(page):
+async def bypass_popup(page):
     try:
         with page.expect_popup(timeout=5000) as popup_info:
-            agree = page.locator('xpath=//*[@aria-label="Accept the use of cookies and other data for the purposes described"]').first
-            click_popup(page=page, element=agree)
+            agree = await page.locator('xpath=//*[@aria-label="Accept the use of cookies and other data for the purposes described"]').first
+            await click_popup(page=page, element=agree)
     except Exception as e:
         try:
-            agree = page.locator(f'xpath=//*[@aria-label="{choice(["Accept","Reject"])} the use of cookies and other data for the purposes described"]')
-            click_popup(page=page, element=agree)
+            agree = await page.locator(f'xpath=//*[@aria-label="{choice(["Accept","Reject"])} the use of cookies and other data for the purposes described"]')
+            await click_popup(page=page, element=agree)
         except:
             pass
 
 
-def bypass_other_popup(page):
+async def bypass_other_popup(page):
     popups = ['Got it', 'Skip trial', 'No thanks', 'Dismiss', 'Not now']
     shuffle(popups)
 
     for popup in popups:
         try:
-            popup = page.locator(f"xpath=//*[@id='button' and @aria-label='{popup}']").first
-            popup.scroll_into_view_if_needed()
-            sleep(1)
-            popup.click(timeout=100)
+            popup = await page.locator(f"xpath=//*[@id='button' and @aria-label='{popup}']").first
+            await popup.scroll_into_view_if_needed()
+            await asyncio.sleep(1)
+            await popup.click(timeout=100)
         except:
             pass
 
     try:
-        popup = page.locator('xpath=//*[@id="dismiss-button"]/yt-button-shape/button').first
-        popup.scroll_into_view_if_needed()
-        sleep(1)
-        popup.click(timeout=100)
+        popup = await page.locator('xpath=//*[@id="dismiss-button"]/yt-button-shape/button').first
+        await popup.scroll_into_view_if_needed()
+        await asyncio.sleep(1)
+        await popup.click(timeout=100)
     except:
         pass

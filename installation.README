@@ -1,0 +1,39 @@
+To set this up you will need to do 3 things:
+- Set up Lambda Layer
+- Set up Lambda Function
+- Set up Eventbridge
+
+## Setting up Lambda Function
+1)
+
+
+) Go to your AWS console and search for Lambda Function -> Navigate to this page
+
+
+## Setting up Lambda Function
+1) Go to your AWS console and search for Lambda Function -> Navigate to this page
+2) Click Create Function
+3) Choose Author from Scratch
+4) Give Function Name
+5) Select Python 3.9 in 'Runtime'
+6) Choose x86_64 'Architecture' -> click Create Function
+7) Scroll to Bottom -> click Add Layer
+8) Select 'Custom layers', then select 'YouTube-Viewer', then select version 1 -> click add
+9) Navigate to Code tab (Code | Test | Monitor ...)
+10) Copy contents of youtube_viewer.py, and paste it below '# TODO implement'  and above the return statement
+11) -> click test
+12) Give event name -> click save
+13) -> click test -> click deploy
+
+## Setting up Eventbridge
+1) Go to your AWS console and search for eventbridge -> Navigate to this page
+2) Click Create Rule
+3) Fill out Name, Description.
+4) Choose Schedule time setting -> click next
+5) Set up timing that you want to trigger your lambda function -> click next
+6) Select AWS Service Option
+7) Select Lambda function from 'Select a target' drop down
+8) Select Lambda function from 'Function' drop down -> click next
+9) Ignore tags -> click next
+10) Revview -> click create rule
+~~~~ Done ~~~~~
