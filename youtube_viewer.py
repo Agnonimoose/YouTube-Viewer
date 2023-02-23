@@ -449,8 +449,7 @@ def spoof_timezone_geolocation(proxy_type, proxy, driver):
             return (latlng_params, location[-1])
 
     except Exception as e:
-        print("spoof_timezone_geolocation 2nd = ", e)
-
+        print(e)
     return info
 
 
@@ -808,16 +807,6 @@ def main_viewer(proxy_type, proxy, position):
                 bad_proxies.remove(proxy)
                 sleep(1)
 
-            # patched_driver = os.path.join(
-            #     patched_drivers, f'chromedriver_{position % threads}{exe_name}')
-            #
-            # try:
-            #     Patcher(executable_path=patched_driver).patch_exe()
-            # except Exception:
-            #     pass
-            #
-            # proxy_folder = os.path.join(
-            #     cwd, 'extension', f'proxy_auth_{position}')
 
             factor = int(threads / (0.1 * threads + 1))
             sleep_time = int((str(position)[-1])) * factor
@@ -905,11 +894,6 @@ def main_viewer(proxy_type, proxy, position):
 
         except Exception as e:
             status = quit_driver(driver=driver, data_dir=data_dir)
-            print("e = ", e)
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            print("*** print_tb:")
-            traceback.print_tb(exc_traceback, limit=10, file=sys.stdout)
-
             print(timestamp() + bcolors.FAIL +
                   f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
 
@@ -958,7 +942,6 @@ async def async_main_viewer(proxy_type, proxy, position):
 
         status = check_proxy(category, agent, proxy, proxy_type)
 
-        print("status = check_proxy = ", status, proxy_type, proxy)
 
         if status != 200:
             raise RequestException(status)
@@ -982,10 +965,9 @@ async def async_main_viewer(proxy_type, proxy, position):
             raise KeyboardInterrupt
 
         spoofs = spoof_timezone_geolocation(proxy_type, proxy, None)
-        print("spoofed = ", spoofs)
+
         browser, context, page = get_driver(spoofs, proxy)
-        # browser, context, page = await asyncify(get_driver)(spoofs, proxy)
-        print("browser, context, page = ", browser, context, page)
+
 
         driver_dict[page] = (browser, context, page)
 
@@ -996,7 +978,7 @@ async def async_main_viewer(proxy_type, proxy, position):
             viewports = [i for i in viewports if int(i[:4]) <= width]
 
         set_referer(position, url, method, driver)
-        print("referer set")
+
         if 'consent' in page.url:
             print(timestamp() + bcolors.OKBLUE +
                   f"Worker {position} | Bypassing consent..." + bcolors.ENDC)
@@ -1036,13 +1018,7 @@ async def async_main_viewer(proxy_type, proxy, position):
         status = quit_driver(driver=page, data_dir=None)
         return True
     except Exception as e:
-        # print("async_main_viewer error = ", e)
-        # print(timestamp() + bcolors.FAIL +
-        #       f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
-        #
-        # create_html(
-        #     {
-        #         "#f14c4c": f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}"})
+
         return False
 
 def main_viewer_scrapbee(proxy, position):
@@ -1105,7 +1081,7 @@ def main_viewer_scrapbee(proxy, position):
             status = quit_driver(driver=driver, data_dir=data_dir)
             exc_type, exc_value, exc_traceback = sys.exc_info()
             print("*** print_tb:")
-            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+            traceback.print_tb(exc_traceback, limit=10, file=sys.stdout)
 
             print(timestamp() + bcolors.FAIL +
                   f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
@@ -1185,9 +1161,8 @@ def main_viewer_scrapbee(proxy, position):
         except Exception as e:
             status = quit_driver(driver=driver, data_dir=data_dir)
             print("e = ", e)
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            print("*** print_tb:")
-            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+
+
 
             print(timestamp() + bcolors.FAIL +
                   f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
@@ -1263,9 +1238,8 @@ def async_main_viewer_scrapbee(proxy, position):
 
         except Exception as e:
             status = quit_driver(driver=driver, data_dir=data_dir)
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            print("*** print_tb:")
-            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+
+
 
             print(timestamp() + bcolors.FAIL +
                   f"Worker {position} | Line : {e.__traceback__.tb_lineno} | {type(e).__name__} | {e.args[0] if e.args else ''}" + bcolors.ENDC)
@@ -1439,19 +1413,6 @@ def view_video(position):
                     splitted = proxy.split('|')
                     main_viewer(splitted[-1], splitted[0], position)
                 else:
-                    # print("checked[position] = ", position,checked, proxy)
-                    # if driver_type == "n":
-                    #     main_viewer('http', proxy, position)
-                    #     if checked[position] == 'http':
-                    #         main_viewer('socks4', proxy, position)
-                    #     if checked[position] == 'socks4':
-                    #         main_viewer('socks5', proxy, position)
-                    # else:
-                    #     async_main_viewer('http', proxy, position)
-                    #     if checked[position] == 'http':
-                    #         async_main_viewer('socks4', proxy, position)
-                    #     if checked[position] == 'socks4':
-                    #         async_main_viewer('socks5', proxy, position)
 
                     if driver_type == "n":
                         passed = False
@@ -1476,23 +1437,16 @@ def view_video(position):
                         passed = False
                         try:
                             passed = asyncio.run(async_main_viewer('https', proxy, position))
-                            if passed == True:
-                                print("position HTTPS passed = ", position, "  ", passed)
                         except Exception as e:
-                            # print(e)
                             pass
                         if passed == False:
                             try:
                                 passed = asyncio.run(async_main_viewer('http', proxy, position))
-                                if passed == True:
-                                    print("position HTTP passed = ", position, "  ", passed)
                             except:
                                 pass
                         if passed == False:
                             try:
                                 passed = asyncio.run(async_main_viewer('socks5', proxy, position))
-                                if passed == True:
-                                    print("position socks5 passed = ", position, "  ", passed)
                             except:
                                 pass
 
@@ -1500,10 +1454,7 @@ def view_video(position):
                 main_viewer_scrapbee(proxy_list, position)
 
     except Exception as e:
-        print("view_video e = ", e)
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        print("*** print_tb:")
-        traceback.print_tb(exc_traceback, limit=5, file=sys.stdout)
+        print(e)
 
 def main():
     global cancel_all, proxy_list, total_proxies, proxies_from_api, threads, hash_config, futures, cpu_usage
@@ -1513,7 +1464,6 @@ def main():
     hash_config = get_hash(config_path)
 
     proxy_list = get_proxy_list()
-    print("proxy_list = ", proxy_list)
     if category != 'r':
         print(bcolors.OKCYAN +
               f'Total proxies : {len(proxy_list)}' + bcolors.ENDC)

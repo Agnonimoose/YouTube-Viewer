@@ -24,9 +24,7 @@ SOFTWARE.
 import os
 from glob import glob
 
-# from .features import *
 from . import features_playwright, bypass_playwright
-from time import sleep
 from random import choice, choices, randint, shuffle, uniform
 
 import asyncio
@@ -110,57 +108,6 @@ async def get_driver(spoofs, proxy=None):
     page.set_default_timeout(0)
     return browser, context, page
 
-# def get_driver(background, viewports, agent, auth_required, path, proxy, proxy_type, proxy_folder):
-#     print("get_driver(background, viewports, agent, auth_required, path, proxy, proxy_type, proxy_folder) = ", background, viewports, agent, auth_required, path, proxy, proxy_type, proxy_folder)
-#     try:
-#         options = webdriver.ChromeOptions()
-#         options.headless = background
-#         if viewports:
-#             options.add_argument(f"--window-size={choice(viewports)}")
-#         options.add_argument("--log-level=3")
-#         options.add_experimental_option(
-#             "excludeSwitches", ["enable-automation", "enable-logging"])
-#         options.add_experimental_option('useAutomationExtension', False)
-#         prefs = {"intl.accept_languages": 'en_US,en',
-#                  "credentials_enable_service": False,
-#                  "profile.password_manager_enabled": False,
-#                  "profile.default_content_setting_values.notifications": 2,
-#                  "download_restrictions": 3}
-#         options.add_experimental_option("prefs", prefs)
-#         options.add_experimental_option('extensionLoadTimeout', 120000)
-#         options.add_argument(f"user-agent={agent}")
-#         options.add_argument("--mute-audio")
-#         options.add_argument('--no-sandbox')
-#         options.add_argument('--disable-dev-shm-usage')
-#         options.add_argument('--disable-features=UserAgentClientHint')
-#         options.add_argument("--disable-web-security")
-#         webdriver.DesiredCapabilities.CHROME['loggingPrefs'] = {
-#             'driver': 'OFF', 'server': 'OFF', 'browser': 'OFF'}
-#
-#         if not background:
-#             options.add_extension(WEBRTC)
-#             options.add_extension(FINGERPRINT)
-#             options.add_extension(ACTIVE)
-#
-#             if CUSTOM_EXTENSIONS:
-#                 for extension in CUSTOM_EXTENSIONS:
-#                     options.add_extension(extension)
-#
-#         if auth_required:
-#             create_proxy_folder(proxy, proxy_folder)
-#             options.add_argument(f"--load-extension={proxy_folder}")
-#         else:
-#             print("get driver proxy_type = ", proxy_type)
-#             print("get driver proxy = ", proxy)
-#             print("--proxy-server={proxy_type}://{proxy} = ", f'--proxy-server={proxy_type}://{proxy}')
-#             options.add_argument(f'--proxy-server={proxy_type}://{proxy}')
-#
-#         service = Service(executable_path=path)
-#         driver = webdriver.Chrome(service=service, options=options)
-#         return driver
-#     except Exception as e:
-#         print(e)
-#         raise e
 
 async def play_video(page):
     try:
