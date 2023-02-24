@@ -1,26 +1,113 @@
 To set this up you will need to do 3 things:
-- Set up Lambda Layer
+- Set up EC2
 - Set up Lambda Function
 - Set up Eventbridge
 
-## Setting up Lambda Function
-1)
+## Setting up EC2
+1) Go to your AWS console and search for EC2 -> Navigate to this page -> click launch incidence
+2) Give name
+3) Select Ubuntu 22.04 (free tier) 64-bit
+4) Select t2.micro Free tier
+5) Create Key pair name it 'YouTube.pem'
+6) Scroll to Network Settings -> click edit
+7) Select default VPC
+8) Select a public Subnet
+9) Auto-Asssign Public IP - Enable
+10) Security Group name 'YoutubeSG'
+11) Click Add Security Group Rule
+12) Type - All Traffic
+13) Source - My IP
+14) Click Launch Incidence -> Navigate back to EC2 page -> click Incidence we just launched
+15) Copy the public DNS of the incidence
+16) Open a Putty Client (suggested SolarWinds or BitVise)
+17) Connect to the incidence with the 'YouTube.pem' Username: Ubuntu Password: Ubuntu
+18) Wait for logon
+19) Do the following commands:
 
+sudo apt update
+sudo apt -y upgrade
+sudo apt install -y python3-pip
+sudo apt install -y build-essential libssl-dev libffi-dev python3-dev
+sudo apt install -y python3-venv
+sudo apt install git
+git clone https://github.com/Agnonimoose/YouTube-Viewer.git
+cd YouTube-Viewer
+python3 -m venv my_env
+source my_env/bin/activate
+pip3 install -r requirements.txt
+python3 -m playwright install
 
-) Go to your AWS console and search for Lambda Function -> Navigate to this page
+20) edit 'proxies.json' to include a json obj of your proxies from your dashboard
+e.g. {"http": "http://YOUR_API_KEY:render_js=False&premium_proxy=True@proxy.scrapingbee.com:8886",
+  "https": "https://YOUR_API_KEY:render_js=False&premium_proxy=True@proxy.scrapingbee.com:8887",
+  "url_socks5": "socks5://YOUR_API_KEY@socks.scrapingbee.com:8888"}
 
+21) Edit urls.txt to choose the videos to scrap
+check it is working:
+21) python3 youtube_viewer.py
+22) sudo apt-get install -y systemd
+23) sudo nano /etc/systemd/system/youtube.service
+24)
+[Unit]
+Description=My test service
+After=multi-user.target
 
-## Setting up Lambda Function
+[Service]
+Type=oneshot
+Restart=always
+WorkingDirectory=/home/ubuntu/YouTube-Viewer/
+VIRTUAL_ENV=/home/ubuntu/YouTube-Viewer/my_env
+Environment=PATH=$VIRTUAL_ENV/bin:$PATH
+ExecStart=/home/ubuntu/YouTube-Viewer/my_env/bin/python /home/ubuntu/YouTube-Viewer/youtube_viewer.py
+
+[Install]
+WantedBy=multi-user.target
+
+25) reboot to see if it is working
+26) if working shutdown machine -> DO NOT TERMINATE!
+
+## Setting up Start Lambda Function
 1) Go to your AWS console and search for Lambda Function -> Navigate to this page
 2) Click Create Function
 3) Choose Author from Scratch
-4) Give Function Name
+4) Give Function Name 'StartScraping'
 5) Select Python 3.9 in 'Runtime'
 6) Choose x86_64 'Architecture' -> click Create Function
-7) Scroll to Bottom -> click Add Layer
-8) Select 'Custom layers', then select 'YouTube-Viewer', then select version 1 -> click add
-9) Navigate to Code tab (Code | Test | Monitor ...)
-10) Copy contents of youtube_viewer.py, and paste it below '# TODO implement'  and above the return statement
+7) Find the ID of the incidence we made aboe
+8) Copy contents the following contents, and paste it below '# TODO implement'  and above the return statement
+
+import boto3
+region = 'eu-west-2'
+instances = [##### ID OF THE INCIDENCE WE MADE!!!! ########]
+ec2 = boto3.client('ec2', region_name=region)
+
+def lambda_handler(event, context):
+    ec2.start_instances(InstanceIds=instances)
+    print('started your instances: ' + str(instances))
+
+11) -> click test
+12) Give event name -> click save
+13) -> click test -> click deploy
+
+## Setting up Stop Lambda Function
+1) Go to your AWS console and search for Lambda Function -> Navigate to this page
+2) Click Create Function
+3) Choose Author from Scratch
+4) Give Function Name 'StopScraping'
+5) Select Python 3.9 in 'Runtime'
+6) Choose x86_64 'Architecture' -> click Create Function
+7) Find the ID of the incidence we made aboe
+8) Copy contents the following contents, and paste it below '# TODO implement'  and above the return statement
+
+import boto3
+region = 'eu-west-2'
+instances = [##### ID OF THE INCIDENCE WE MADE!!!! ########]
+ec2 = boto3.client('ec2', region_name=region)
+
+def lambda_handler(event, context):
+    ec2.stop_instances(InstanceIds=instances)
+    print('stopped your instances: ' + str(instances))
+
 11) -> click test
 12) Give event name -> click save
 13) -> click test -> click deploy
@@ -30,10 +117,18 @@ To set this up you will need to do 3 things:
 2) Click Create Rule
 3) Fill out Name, Description.
 4) Choose Schedule time setting -> click next
-5) Set up timing that you want to trigger your lambda function -> click next
+5) Set up timing that you want to trigger your 'StartScraping' lambda function -> click next
 6) Select AWS Service Option
 7) Select Lambda function from 'Select a target' drop down
-8) Select Lambda function from 'Function' drop down -> click next
+8) Select 'StartScraping' Lambda function from 'Function' drop down -> click next
 9) Ignore tags -> click next
-10) Revview -> click create rule
+10) Review -> click create rule
+11) Fill out Name, Description.
+12) Choose Schedule time setting -> click next
+13) Set up timing that you want to trigger your 'StopScraping' lambda function -> click next
+14) Select AWS Service Option
+15) Select Lambda function from 'Select a target' drop down
+16) Select 'StopScraping' Lambda function from 'Function' drop down -> click next
+17) Ignore tags -> click next
+18) Review -> click create rule
 ~~~~ Done ~~~~~
